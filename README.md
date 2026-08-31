@@ -1,3 +1,4 @@
+
 # ATS Resume Analyzer
 
 A local, deterministic resume-review tool that estimates ATS compatibility. It accepts PDF and DOCX resumes, optionally matches them to a job description, stores results locally in SQLite, and exports a readable report.
