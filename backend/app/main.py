@@ -23,7 +23,16 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="ATS Resume Analyzer API", version="0.1.0", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=settings.allowed_origins, allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://perso-ats.vercel.app",
+        "http://localhost:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def not_found() -> HTTPException:
@@ -56,7 +65,7 @@ def create_analysis(request: AnalyzeRequest, db: Session = Depends(get_db)) -> A
         raise not_found()
     result = analyze_resume(resume.extracted_text, request.job_description)
     payload = result.__dict__ | {"extracted_text": resume.extracted_text, "job_match_score": next(score.value for score in result.scores if score.label == "Job match")}
-    analysis = Analysis(resume_id=resume.id, overall_score=result.overall_score, parsing_score=next(x.value for x in result.scores if x.label == "Parsing"), keyword_score=next(x.value for x in result.scores if x.label == "Keywords"), job_match_score=payload["job_match_score"], experience_score=next(x.value for x in result.scores if x.label == "Experience"), skills_score=next(x.value for x in result.scores if x.label == "Skills"), section_score=next(x.value for x in result.scores if x.label == "Sections"), formatting_score=next(x.value for x in result.scores if x.label == "Formatting"), contact_score=next(x.value for x in result.scores if x.label == "Contact"), result_json=json.dumps(payload, default=lambda value: value.model_dump() if hasattr(value, "model_dump") else value))
+    analysis = Analysis(resume_id=resume.id, overall_score=result.overall_score, parsing_score=next(x.value for x in result.scores if x.label == "Parsing"), keyword_score=next(x.value for x in res[...]
     db.add(analysis)
     db.commit()
     db.refresh(analysis)
@@ -70,7 +79,7 @@ def list_analyses(db: Session = Depends(get_db)) -> list[HistoryItem]:
     for analysis in analyses:
         payload = json.loads(analysis.result_json)
         issue = payload.get("issues", [{}])[0].get("title") if payload.get("issues") else None
-        items.append(HistoryItem(id=analysis.id, filename=analysis.resume.filename, overall_score=analysis.overall_score, job_match_score=analysis.job_match_score, created_at=analysis.created_at, main_issue=issue))
+        items.append(HistoryItem(id=analysis.id, filename=analysis.resume.filename, overall_score=analysis.overall_score, job_match_score=analysis.job_match_score, created_at=analysis.created_at, [...]
     return items
 
 
@@ -98,6 +107,6 @@ def download_report(analysis_id: int, db: Session = Depends(get_db)) -> Response
     if not analysis:
         raise not_found()
     result = json.loads(analysis.result_json)
-    report = f"ATS Resume Analysis\n\nEstimated ATS Compatibility: {result['overall_score']}/100 ({result['label']})\nResume: {analysis.resume.filename}\nGenerated: {analysis.created_at.isoformat()}\n\nScore Breakdown:\n" + "\n".join(f"- {item['label']}: {item['value']}/{20 if item['label'] in ['Parsing', 'Keywords', 'Job match'] else 15 if item['label'] == 'Experience' else 10 if item['label'] == 'Skills' else 5}" for item in result['scores']) + "\n\nRecommendations:\n" + "\n".join(f"- {item}" for item in result['recommendations'])
+    report = f"ATS Resume Analysis\n\nEstimated ATS Compatibility: {result['overall_score']}/100 ({result['label']})\nResume: {analysis.resume.filename}\nGenerated: {analysis.created_at.isoformat[...]
     return Response(content=report, media_type="text/plain", headers={"Content-Disposition": f'attachment; filename="ats-analysis-{analysis_id}.txt"'})
 
