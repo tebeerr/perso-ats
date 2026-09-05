@@ -1,0 +1,55 @@
+.hero-card {
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(210px, .8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 18px;
+  background: radial-gradient(circle at 18% 12%, #27385f 0, #17233f 37%, #10192f 100%);
+}
+
+.hero-card::after { content: ''; position: absolute; inset: auto 0 0; height: 1px; background: linear-gradient(90deg, transparent, #76f1d0, transparent); opacity: .75; }
+.hero-copy { position: relative; z-index: 2; }
+.hero-copy .text-action { width: fit-content; }
+
+.signal-orb {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  position: relative;
+  z-index: 1;
+  width: min(100%, 250px);
+  aspect-ratio: 1;
+  margin: 4px auto;
+  transform: perspective(700px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transform-style: preserve-3d;
+  transition: transform .35s cubic-bezier(.2,.8,.2,1);
+  filter: drop-shadow(0 24px 22px #050a17aa);
+  cursor: crosshair;
+}
+
+.signal-grid, .signal-halo, .signal-core, .signal-orbit { position: absolute; inset: 0; transform-style: preserve-3d; }
+.signal-grid { border: 1px solid #ffffff1c; border-radius: 50%; background: repeating-radial-gradient(circle, transparent 0 26px, #8af7df12 27px 28px), linear-gradient(90deg, transparent 49.7%, #8af7df15 50%, transparent 50.3%), linear-gradient(0deg, transparent 49.7%, #8af7df15 50%, transparent 50.3%); box-shadow: inset 0 0 40px #6deac222, 0 0 45px #6deac21c; animation: signal-breathe 5s ease-in-out infinite; }
+.signal-halo { inset: 12%; border: 1px solid #84f7df55; border-radius: 50%; background: radial-gradient(circle at 35% 28%, #b5fff033, transparent 30%), radial-gradient(circle, #4fdcbf16, transparent 68%); }
+.signal-halo-one { transform: translateZ(18px) rotateX(65deg) rotateZ(20deg); animation: signal-spin 16s linear infinite; }
+.signal-halo-two { inset: 18%; transform: translateZ(28px) rotateY(70deg) rotateZ(-20deg); border-color: #91aaff5c; animation: signal-spin-reverse 12s linear infinite; }
+.signal-core { inset: 26%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 1px solid #b8fff080; border-radius: 50%; color: #e4fff9; background: radial-gradient(circle at 35% 25%, #8fffe96b, #204d54 38%, #101d37 78%); box-shadow: 0 0 25px #5be5ca44, inset 0 0 22px #9affec33; transform: translateZ(42px); }
+.signal-core-glow { position: absolute; inset: 16%; border-radius: 50%; background: #b9fff5; filter: blur(18px); opacity: .12; }
+.signal-core svg, .signal-core strong, .signal-core span { position: relative; }
+.signal-core strong { font: 600 42px 'DM Mono', monospace; letter-spacing: -3px; }
+.signal-core span, .signal-stat { font: 500 8px 'DM Mono', monospace; letter-spacing: 1px; }
+.signal-orbit { inset: 4%; border: 1px solid #7ef3d655; border-radius: 50%; transform: translateZ(12px) rotateX(67deg) rotateZ(18deg); animation: signal-spin 11s linear infinite; }
+.signal-orbit-two { inset: 15%; transform: translateZ(26px) rotateY(67deg) rotateZ(-25deg); border-color: #9aaeff70; animation-duration: 8s; animation-direction: reverse; }
+.signal-orbit i { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #88ffe1; box-shadow: 0 0 12px #88ffe1; top: 4%; left: 50%; }
+.signal-orbit i:nth-child(2) { top: 78%; left: 10%; background: #9aaeff; box-shadow: 0 0 12px #9aaeff; }
+.signal-orbit i:nth-child(3) { top: 62%; left: 88%; }
+.signal-stat { position: absolute; z-index: 3; display: flex; align-items: center; gap: 5px; padding: 6px 8px; border: 1px solid #ffffff20; border-radius: 99px; color: #b9c9de; background: #101a31cc; box-shadow: 0 8px 14px #050a1733; transform: translateZ(55px); white-space: nowrap; }
+.signal-stat-top { top: 11%; right: -2%; }
+.signal-stat-bottom { bottom: 9%; left: -3%; color: #88ffe1; }
+
+@keyframes signal-spin { to { transform: translateZ(12px) rotateX(67deg) rotateZ(378deg); } }
+@keyframes signal-spin-reverse { to { transform: translateZ(26px) rotateY(67deg) rotateZ(-385deg); } }
+@keyframes signal-breathe { 50% { transform: scale(1.025); opacity: .82; } }
+
+@media (max-width: 900px) { .hero-card { grid-template-columns: minmax(180px, .7fr) minmax(0, 1.3fr); } }
+@media (max-width: 640px) { .hero-card { display: block; } .signal-orb { width: min(76vw, 245px); margin: 0 auto 22px; } .hero-copy { text-align: left; } .signal-stat-top { right: 3%; } .signal-stat-bottom { left: 2%; } }
+@media (prefers-reduced-motion: reduce) { .signal-orb, .signal-grid, .signal-halo, .signal-orbit { animation: none; transition: none; } }
