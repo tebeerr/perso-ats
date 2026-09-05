@@ -1,3 +1,4 @@
+
 # ATS Resume Analyzer
 
 ATS Resume Analyzer is a local-first application that helps candidates understand how clearly their resume can be parsed and how closely it matches a target job description. It accepts PDF and DOCX files, extracts their text, calculates a transparent compatibility score, stores analysis history in SQLite, and exports a text report.
