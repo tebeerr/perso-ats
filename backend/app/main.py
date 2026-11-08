@@ -4,6 +4,7 @@ from datetime import datetime
 from io import BytesIO
 
 from fastapi import Depends, FastAPI, File, HTTPException, Response, UploadFile
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
@@ -64,8 +65,27 @@ def create_analysis(request: AnalyzeRequest, db: Session = Depends(get_db)) -> A
     if not resume:
         raise not_found()
     result = analyze_resume(resume.extracted_text, request.job_description)
-    payload = result.__dict__ | {"extracted_text": resume.extracted_text, "job_match_score": next(score.value for score in result.scores if score.label == "Job match")}
-    analysis = Analysis(resume_id=resume.id, overall_score=result.overall_score, parsing_score=next(x.value for x in result.scores if x.label == "Parsing"), keyword_score=next(x.value for x in res[...]
+    payload = jsonable_encoder(
+        result.__dict__
+        | {
+            "extracted_text": resume.extracted_text,
+            "job_match_score": next(score.value for score in result.scores if score.label == "Job match"),
+        }
+    )
+    score_values = {score.label: score.value for score in result.scores}
+    analysis = Analysis(
+        resume_id=resume.id,
+        overall_score=result.overall_score,
+        parsing_score=score_values["Parsing"],
+        keyword_score=score_values["Keywords"],
+        job_match_score=score_values["Job match"],
+        experience_score=score_values["Experience"],
+        skills_score=score_values["Skills"],
+        section_score=score_values["Sections"],
+        formatting_score=score_values["Formatting"],
+        contact_score=score_values["Contact"],
+        result_json=json.dumps(payload),
+    )
     db.add(analysis)
     db.commit()
     db.refresh(analysis)
@@ -79,7 +99,16 @@ def list_analyses(db: Session = Depends(get_db)) -> list[HistoryItem]:
     for analysis in analyses:
         payload = json.loads(analysis.result_json)
         issue = payload.get("issues", [{}])[0].get("title") if payload.get("issues") else None
-        items.append(HistoryItem(id=analysis.id, filename=analysis.resume.filename, overall_score=analysis.overall_score, job_match_score=analysis.job_match_score, created_at=analysis.created_at, [...]
+        items.append(
+            HistoryItem(
+                id=analysis.id,
+                filename=analysis.resume.filename,
+                overall_score=analysis.overall_score,
+                job_match_score=analysis.job_match_score,
+                created_at=analysis.created_at,
+                main_issue=issue,
+            )
+        )
     return items
 
 
@@ -107,6 +136,10 @@ def download_report(analysis_id: int, db: Session = Depends(get_db)) -> Response
     if not analysis:
         raise not_found()
     result = json.loads(analysis.result_json)
-    report = f"ATS Resume Analysis\n\nEstimated ATS Compatibility: {result['overall_score']}/100 ({result['label']})\nResume: {analysis.resume.filename}\nGenerated: {analysis.created_at.isoformat[...]
+    report = (
+        f"ATS Resume Analysis\n\n"
+        f"Estimated ATS Compatibility: {result['overall_score']}/100 ({result['label']})\n"
+        f"Resume: {analysis.resume.filename}\n"
+        f"Generated: {analysis.created_at.isoformat()}\n"
+    )
     return Response(content=report, media_type="text/plain", headers={"Content-Disposition": f'attachment; filename="ats-analysis-{analysis_id}.txt"'})
-
